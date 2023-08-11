@@ -40,6 +40,13 @@ public interface NetChannel {
     void write(final WritableMessage message);
 
     /**
+     * Write a split message on the channel
+     *
+     * @param frames the frames to write
+     */
+    void write(final NetFrame... frames);
+
+    /**
      * Terminate the channel now
      */
     void terminateNow();

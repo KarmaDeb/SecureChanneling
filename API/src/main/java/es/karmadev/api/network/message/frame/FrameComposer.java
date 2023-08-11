@@ -4,6 +4,7 @@ import es.karmadev.api.network.channel.ChannelHandler;
 import es.karmadev.api.network.channel.NetChannel;
 import es.karmadev.api.network.exception.message.EmptyComposerException;
 import es.karmadev.api.network.message.NetMessage;
+import es.karmadev.api.network.message.WritableMessage;
 
 /**
  * Frame message composer. This class should
@@ -30,11 +31,10 @@ public interface FrameComposer {
      * Build the network message from
      * the appended frames
      *
-     * @param handler the channel handler
      * @return the network message
      * @throws EmptyComposerException if the composer is empty
      */
-    NetMessage build(final NetChannel handler) throws EmptyComposerException;
+    NetMessage build() throws EmptyComposerException;
 
     /**
      * Split the network message
@@ -42,5 +42,5 @@ public interface FrameComposer {
      * @param message the network message to split
      * @param length the max length of each frame
      */
-    NetFrame[] split(final FrameContent message, final int length);
+    NetFrame[] split(final WritableMessage message, final int length);
 }

@@ -42,11 +42,11 @@ public class DecoderHandler extends ByteToMessageDecoder {
                 if (object instanceof NetFrame) {
                     NetFrame frame = (NetFrame) object;
 
-                    FrameMessageComposer composer = composerMap.computeIfAbsent(frame.id(), (c) -> new FrameMessageComposer());
+                    FrameMessageComposer composer = composerMap.computeIfAbsent(frame.id(), (c) -> new FrameMessageComposer(channel));
                     composer.append(frame);
 
                     if (composer.isFull()) {
-                        read = (ReadOnlyMessage) composer.build(channel);
+                        read = (ReadOnlyMessage) composer.build();
                     }
                 }
             } catch (IOException | ClassNotFoundException | EmptyComposerException ex2) {

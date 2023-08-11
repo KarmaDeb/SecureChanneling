@@ -172,11 +172,11 @@ public class NettyChannel implements NetChannel {
                 if (server) {
                     for (Channel channel : this.group) {
                         Iterator<NetFrame> channelPrivateIterator = Arrays.stream(frames.clone()).iterator();
-                        sendEncrypted(channel, channelPrivateIterator);
+                        sendFramed(channel, channelPrivateIterator);
                     }
                 } else {
                     Iterator<NetFrame> serverPrivateIterator = Arrays.stream(frames.clone()).iterator();
-                    sendEncrypted(channel, serverPrivateIterator);
+                    sendFramed(channel, serverPrivateIterator);
                 }
             } else {
                 if (server) {
@@ -200,7 +200,27 @@ public class NettyChannel implements NetChannel {
         });
     }
 
-    private void sendEncrypted(final Channel channel, final Iterator<NetFrame> iterator) {
+    /**
+     * Write a split message on the channel
+     *
+     * @param frames the frames to write
+     */
+    @Override
+    public void write(final NetFrame... frames) {
+        this.channel.eventLoop().submit(() -> {
+            if (server) {
+                for (Channel channel : this.group) {
+                    Iterator<NetFrame> channelPrivateIterator = Arrays.stream(frames.clone()).iterator();
+                    sendFramed(channel, channelPrivateIterator);
+                }
+            } else {
+                Iterator<NetFrame> serverPrivateIterator = Arrays.stream(frames.clone()).iterator();
+                sendFramed(channel, serverPrivateIterator);
+            }
+        });
+    }
+
+    private void sendFramed(final Channel channel, final Iterator<NetFrame> iterator) {
         if (iterator.hasNext()) {
             NetFrame frame = iterator.next();
             try (ByteArrayOutputStream out = new ByteArrayOutputStream(); ObjectOutputStream stream = new ObjectOutputStream(out)) {
@@ -214,7 +234,7 @@ public class NettyChannel implements NetChannel {
                     }
 
                     if (channelFuture.isSuccess()) {
-                        sendEncrypted(channel, iterator);
+                        sendFramed(channel, iterator);
                     }
                 });
             } catch (IOException ignored) {
