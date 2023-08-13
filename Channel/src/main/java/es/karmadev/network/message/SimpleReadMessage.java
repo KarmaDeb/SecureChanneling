@@ -2,11 +2,11 @@ package es.karmadev.network.message;
 
 import es.karmadev.api.network.message.ReadOnlyMessage;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 
 public class SimpleReadMessage implements ReadOnlyMessage {
 
@@ -81,9 +81,7 @@ public class SimpleReadMessage implements ReadOnlyMessage {
     @Override
     public char readCharacter() {
         if (charPointer >= data.characters.size()) throw new IndexOutOfBoundsException();
-
-        int charPoint = data.characters.get(charPointer++);
-        return (char) charPoint;
+        return data.characters.get(charPointer++);
     }
 
     /**
@@ -96,7 +94,20 @@ public class SimpleReadMessage implements ReadOnlyMessage {
         if (bytePointer >= data.bytes.size()) throw new IndexOutOfBoundsException();
 
         byte[] data = this.data.bytes.get(bytePointer++);
+        if (data == null) return null;
+
         return new String(data, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Read the key value
+     *
+     * @param key the key
+     * @return the value
+     */
+    @Override
+    public String readKey(final String key) {
+        return data.keys.get(key);
     }
 
     /**
@@ -105,7 +116,7 @@ public class SimpleReadMessage implements ReadOnlyMessage {
      * @return the next byte length
      */
     @Override
-    public long nextByteLength() {
+    public int nextByteLength() {
         if (bytePointer >= data.bytes.size()) return -1;
 
         byte[] data = this.data.bytes.get(bytePointer + 1);
@@ -133,6 +144,35 @@ public class SimpleReadMessage implements ReadOnlyMessage {
                 output[i] = data[i];
             }
         }
+    }
+
+    /**
+     * Build the read only message into a
+     * byte array, so it can be sent into
+     * another read only message
+     *
+     * @return the message bytes
+     */
+    @Override
+    public byte[] toByteArray() {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream(); ObjectOutputStream stream = new ObjectOutputStream(out)) {
+            stream.writeObject(data);
+            stream.flush();
+
+            return out.toByteArray();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Reset the message pointers
+     */
+    @Override
+    public void resetPointers() {
+        numberPointer = 0;
+        charPointer = 0;
+        bytePointer = 0;
     }
 
     /**
@@ -165,7 +205,7 @@ public class SimpleReadMessage implements ReadOnlyMessage {
         if (!data.numbers.isEmpty()) {
             builder.append("Numbers:{");
             for (int i = 0; i < data.numbers.size(); i++) {
-                byte number = data.numbers.get(i);
+                Number number = data.numbers.get(i);
                 builder.append(number);
                 if (i != data.numbers.size() - 1) {
                     builder.append(", ");
@@ -178,28 +218,49 @@ public class SimpleReadMessage implements ReadOnlyMessage {
             if (writeComma) builder.append(", ");
             builder.append("Characters:{");
             for (int i = 0; i < data.characters.size(); i++) {
-                int number = data.characters.get(i);
-                builder.append((char) number);
+                char character = data.characters.get(i);
+                builder.append(character);
                 if (i != data.characters.size() - 1) {
                     builder.append(", ");
                 }
             }
             builder.append("}");
+            writeComma = true;
         }
         if (!data.bytes.isEmpty()) {
             if (writeComma) builder.append(", ");
             builder.append("UTF:{");
             for (int i = 0; i < data.bytes.size(); i++) {
-                byte[] data = this.data.bytes.get(i);
-                if (data != null) {
-                    String str = new String(data, StandardCharsets.UTF_8);
+                byte[] bData = data.bytes.get(i);
+                if (bData != null) {
+                    String str = new String(bData, StandardCharsets.UTF_8);
                     builder.append("\"").append(str).append("\"");
-                    if (i != this.data.bytes.size() - 1) {
-                        builder.append(", ");
+                    if (i + 1 < data.bytes.size()) {
+                        byte[] nextData = data.bytes.get(i + 1);
+                        if (nextData != null) {
+                            builder.append(", ");
+                        }
                     }
                 }
             }
             builder.append("}");
+            writeComma = true;
+        }
+        if (!data.keys.isEmpty()) {
+            if (writeComma) builder.append(",");
+            builder.append("Keys:{");
+            List<String> keys = Arrays.asList(data.keys.keySet().toArray(new String[0]));
+            for (int i = 0; i < keys.size(); i++) {
+                String key = keys.get(i);
+                if (key != null) {
+                    String value = data.keys.get(key);
+                    builder.append("\"").append(key).append("\"").append(":").append("\"").append(value).append("\"");
+
+                    if (i != keys.size() - 1) {
+                        builder.append(",");
+                    }
+                }
+            }
         }
 
         return builder.append("]").toString();

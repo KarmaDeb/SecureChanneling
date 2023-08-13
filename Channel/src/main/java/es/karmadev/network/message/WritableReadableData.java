@@ -1,27 +1,25 @@
 package es.karmadev.network.message;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class WritableReadableData implements Serializable {
 
     protected final int id;
     protected boolean encrypted;
-    protected final List<Byte> numbers = new ArrayList<>();
-    protected final List<Byte> characters = new ArrayList<>();
+    protected final List<Number> numbers = new ArrayList<>();
+    protected final List<Character> characters = new ArrayList<>();
     protected final List<byte[]> bytes = new ArrayList<>();
+    protected final Map<String, String> keys = new HashMap<>();
 
     WritableReadableData(final SimpleWriteMessage message) {
         this.id = message.id();
         this.encrypted = message.encrypted();
-        for (byte number : message.numbers) {
-            this.numbers.add(number);
-        }
-        for (byte character : message.characters) {
+        this.numbers.addAll(Arrays.asList(message.numbers));
+        for (char character : message.characters) {
             this.characters.add(character);
         }
         this.bytes.addAll(Arrays.asList(message.bytes));
+        keys.putAll(message.keys);
     }
 }

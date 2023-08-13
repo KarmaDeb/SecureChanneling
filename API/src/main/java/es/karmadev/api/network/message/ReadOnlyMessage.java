@@ -1,11 +1,9 @@
 package es.karmadev.api.network.message;
 
-import es.karmadev.api.network.message.frame.FrameContent;
-
 /**
  * Read only message
  */
-public interface ReadOnlyMessage extends FrameContent {
+public interface ReadOnlyMessage extends NetMessage {
 
     /**
      * Read the next number from the message
@@ -29,11 +27,19 @@ public interface ReadOnlyMessage extends FrameContent {
     String readUTF();
 
     /**
+     * Read the key value
+     *
+     * @param key the key
+     * @return the value
+     */
+    String readKey(final String key);
+
+    /**
      * Get the next byte length
      *
      * @return the next byte length
      */
-    long nextByteLength();
+    int nextByteLength();
 
     /**
      * Read the byte array into the output
@@ -41,4 +47,18 @@ public interface ReadOnlyMessage extends FrameContent {
      * @param output the output
      */
     void read(final byte[] output);
+
+    /**
+     * Build the read only message into a
+     * byte array, so it can be sent into
+     * another read only message
+     *
+     * @return the message bytes
+     */
+    byte[] toByteArray();
+
+    /**
+     * Reset the message pointers
+     */
+    void resetPointers();
 }

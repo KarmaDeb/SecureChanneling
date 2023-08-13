@@ -1,25 +1,32 @@
 package es.karmadev.network.message;
 
+import es.karmadev.api.network.message.ReadOnlyMessage;
 import es.karmadev.api.network.message.WritableMessage;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.Base64;
+import java.util.*;
 
 class SimpleWriteMessage implements WritableMessage {
 
     private final static SecureRandom random = new SecureRandom();
 
-    private final int id = random.nextInt();
+    private final int id;
     private boolean encrypted = false;
 
-    protected byte[] numbers = new byte[0];
-    protected byte[] characters = new byte[0];
+    protected Number[] numbers = new Number[0];
+    protected char[] characters = new char[0];
     protected byte[][] bytes = new byte[10][];
+    protected Map<String, String> keys = new HashMap<>();
+
+    public SimpleWriteMessage() {
+        id = random.nextInt();
+    }
+
+    public SimpleWriteMessage(final ReadOnlyMessage responseAs) {
+        id = responseAs.id();
+    }
 
     /**
      * Network message id
@@ -60,7 +67,7 @@ class SimpleWriteMessage implements WritableMessage {
     @Override
     public void writeNumber(final Number number) {
         numbers = Arrays.copyOf(numbers, numbers.length + 1);
-        numbers[numbers.length - 1] = number.byteValue();
+        numbers[numbers.length - 1] = number;
     }
 
     /**
@@ -71,7 +78,7 @@ class SimpleWriteMessage implements WritableMessage {
     @Override
     public void writeCharacter(final char character) {
         characters = Arrays.copyOf(characters, characters.length + 1);
-        characters[characters.length - 1] = (byte) character;
+        characters[characters.length - 1] = character;
     }
 
     /**
@@ -94,6 +101,17 @@ class SimpleWriteMessage implements WritableMessage {
     public void writeAll(final byte[] bytes) {
         this.bytes = deepCopy();
         this.bytes[findWritableIndex()] = bytes;
+    }
+
+    /**
+     * Write a key into the message
+     *
+     * @param key   the key
+     * @param value the value
+     */
+    @Override
+    public void writeKey(final String key, final String value) {
+        keys.put(key, value);
     }
 
     /**
@@ -165,7 +183,7 @@ class SimpleWriteMessage implements WritableMessage {
         if (numbers.length > 0) {
             builder.append("Numbers:{");
             for (int i = 0; i < numbers.length; i++) {
-                byte number = numbers[i];
+                Number number = numbers[i];
                 builder.append(number);
                 if (i != numbers.length - 1) {
                     builder.append(", ");
@@ -178,13 +196,14 @@ class SimpleWriteMessage implements WritableMessage {
             if (writeComma) builder.append(", ");
             builder.append("Characters:{");
             for (int i = 0; i < characters.length; i++) {
-                int number = characters[i];
-                builder.append((char) number);
+                char character = characters[i];
+                builder.append(character);
                 if (i != characters.length - 1) {
                     builder.append(", ");
                 }
             }
             builder.append("}");
+            writeComma = true;
         }
         if (bytes.length > 0) {
             if (writeComma) builder.append(", ");
@@ -194,12 +213,32 @@ class SimpleWriteMessage implements WritableMessage {
                 if (data != null) {
                     String str = new String(data, StandardCharsets.UTF_8);
                     builder.append("\"").append(str).append("\"");
-                    if (i != bytes.length - 1) {
-                        builder.append(", ");
+                    if (i + 1 < bytes.length) {
+                        byte[] nextData = bytes[i + 1];
+                        if (nextData != null) {
+                            builder.append(", ");
+                        }
                     }
                 }
             }
             builder.append("}");
+            writeComma = true;
+        }
+        if (!keys.isEmpty()) {
+            if (writeComma) builder.append(",");
+            builder.append("Keys:{");
+            List<String> keys = Arrays.asList(this.keys.keySet().toArray(new String[0]));
+            for (int i = 0; i < keys.size(); i++) {
+                String key = keys.get(i);
+                if (key != null) {
+                    String value = this.keys.get(key);
+                    builder.append("\"").append(key).append("\"").append(":").append("\"").append(value).append("\"");
+
+                    if (i != keys.size() - 1) {
+                        builder.append(",");
+                    }
+                }
+            }
         }
 
         return builder.append("]").toString();

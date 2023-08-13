@@ -1,5 +1,8 @@
 package es.karmadev.network.handler;
 
+import es.karmadev.api.network.message.WritableMessage;
+import es.karmadev.network.channel.NettyChannel;
+import es.karmadev.network.message.MessageConstructor;
 import io.netty.channel.*;
 
 import java.util.function.Consumer;
@@ -32,6 +35,8 @@ public class OutboundProcessHandler extends ChannelOutboundHandlerAdapter {
      */
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("[" + ctx.name() + "] End connection");
+
         if (onDisconnection == null) return;
         onDisconnection.accept(ctx.channel());
     }

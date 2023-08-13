@@ -27,7 +27,7 @@ public interface NetFrame extends NetMessage {
      *
      * @return the frame length
      */
-    long length();
+    int length();
 
     /**
      * Read the frame
@@ -39,6 +39,20 @@ public interface NetFrame extends NetMessage {
      * and cannot read more
      */
     void read(final byte[] output, final int startIndex) throws FrameOutOfBounds;
+
+    /**
+     * Get the frame key
+     *
+     * @return the frame key
+     */
+    byte[] getKey();
+
+    /**
+     * Get the frame IV parameter spec
+     *
+     * @return the frame IV
+     */
+    byte[] getIv();
 
     /**
      * Reset the pointer

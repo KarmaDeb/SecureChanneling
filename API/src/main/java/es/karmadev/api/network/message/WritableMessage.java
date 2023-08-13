@@ -1,13 +1,11 @@
 package es.karmadev.api.network.message;
 
-import es.karmadev.api.network.message.frame.FrameContent;
-
 import java.nio.charset.StandardCharsets;
 
 /**
  * Writable only message
  */
-public interface WritableMessage extends FrameContent {
+public interface WritableMessage extends NetMessage {
 
     /**
      * Write a number into the
@@ -46,6 +44,14 @@ public interface WritableMessage extends FrameContent {
      * @param bytes the bytes to write
      */
     void writeAll(final byte[] bytes);
+
+    /**
+     * Write a key into the message
+     *
+     * @param key the key
+     * @param value the value
+     */
+    void writeKey(final String key, final String value);
 
     /**
      * Build the writable message into a

@@ -9,15 +9,19 @@ public class NetworkFrame implements NetFrame {
     private final boolean encrypted;
     private final int position;
     private final int maxPosition;
+    private final byte[] key;
+    private final byte[] iv;
     private final byte[] data;
 
     private transient int pointer;
 
-    public NetworkFrame(final int id, final boolean encrypted, final int position, final int maxPosition, final byte[] data) {
+    public NetworkFrame(final int id, final boolean encrypted, final int position, final int maxPosition, final byte[] key, final byte[] iv, final byte[] data) {
         this.id = id;
         this.encrypted = encrypted;
         this.position = position;
         this.maxPosition = maxPosition;
+        this.key = key;
+        this.iv = iv;
         this.data = data;
     }
 
@@ -77,7 +81,7 @@ public class NetworkFrame implements NetFrame {
      * @return the frame length
      */
     @Override
-    public long length() {
+    public int length() {
         return data.length;
     }
 
@@ -99,6 +103,26 @@ public class NetworkFrame implements NetFrame {
             output[startIndex + i] = data[i];
             pointer = i;
         }
+    }
+
+    /**
+     * Get the frame key
+     *
+     * @return the frame key
+     */
+    @Override
+    public byte[] getKey() {
+        return key.clone();
+    }
+
+    /**
+     * Get the frame IV parameter spec
+     *
+     * @return the frame IV
+     */
+    @Override
+    public byte[] getIv() {
+        return iv.clone();
     }
 
     /**
